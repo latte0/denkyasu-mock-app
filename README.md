@@ -1,36 +1,113 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# dentsu Mock Application
 
-## Getting Started
+Next.js 14 + TypeScript + Material-UI を使用したモックアプリケーション
 
-First, run the development server:
+## 機能
+
+### 1. ログイン画面
+- ID/PASSワード入力（任意の値で認証可能）
+- 営業職/アタリ職の選択
+
+### 2. TOP画面
+以下の3つのメニューから選択:
+- 案件情報（営業情報）
+- あたり情報
+- 進捗管理
+
+### 3. 営業情報
+- 検索機能（広告主、タレント名、ステータス）
+- 案件一覧表示
+- 詳細/編集画面（タブ形式）
+  - 基本情報
+  - 金額
+  - 出演情報
+  - 営業情報
+  - 事務所情報
+  - 社内管理情報
+- 新規作成機能
+
+### 4. あたり情報
+- 一覧表示
+- 詳細/編集画面
+- 新規作成機能
+
+### 5. 進捗管理
+- MUI DataGrid を使用したExcel風画面
+- セル編集機能
+- CRUD操作（作成/更新/削除）
+- ページネーション
+
+## 技術スタック
+
+- **Framework**: Next.js 14 (App Router)
+- **Language**: TypeScript
+- **UI Library**: Material-UI v5
+- **Data Grid**: MUI X DataGrid (free version)
+- **State Management**: React Context API
+- **Mock Data**: JSON files
+
+## セットアップ
+
+### 依存関係のインストール
+
+```bash
+npm install
+```
+
+### 開発サーバーの起動
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+ブラウザで [http://localhost:3000](http://localhost:3000) を開きます。
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### ビルド
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run build
+```
 
-## Learn More
+### 本番環境での起動
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm start
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## ディレクトリ構成
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+mock-app/
+├── app/                    # Next.js App Router pages
+│   ├── page.tsx           # ログイン画面
+│   ├── top/               # TOP画面
+│   ├── eigyo/             # 営業情報
+│   ├── atari/             # あたり情報
+│   └── shinchoku/         # 進捗管理
+├── components/            # 共通コンポーネント
+│   └── Header.tsx
+├── context/               # React Context
+│   └── DataContext.tsx
+├── data/                  # モックデータ (JSON)
+│   ├── masters.json
+│   ├── eigyo.json
+│   ├── atari.json
+│   └── shinchoku.json
+└── types/                 # TypeScript型定義
+    └── index.ts
+```
 
-## Deploy on Vercel
+## 使い方
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. ログイン画面で任意のID/PASSを入力してログイン
+2. TOP画面から操作したい項目を選択
+3. 各画面でデータの閲覧・作成・編集・削除が可能
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## モックデータ
+
+すべてのデータは JSON ファイルとして `data/` ディレクトリに保存されています。
+アプリケーション実行中の変更は React の state で管理され、リロードすると初期状態に戻ります。
+
+## モバイル対応
+
+モバイルファーストデザインを採用しており、スマートフォンからタブレット、デスクトップまで対応しています。

@@ -1,0 +1,110 @@
+{
+  "eigyokyoku": [
+    { "code": "E001", "name": "第1営業局" },
+    { "code": "E002", "name": "第2営業局" },
+    { "code": "E003", "name": "第3営業局" },
+    { "code": "E004", "name": "第4営業局" },
+    { "code": "E005", "name": "第5営業局" }
+  ],
+  "status": [
+    { "code": "S001", "name": "新規作業" },
+    { "code": "S002", "name": "プレゼン中" },
+    { "code": "S003", "name": "プレゼン結果" },
+    { "code": "S004", "name": "決定" },
+    { "code": "S005", "name": "業務報告" },
+    { "code": "S006", "name": "保留" },
+    { "code": "S007", "name": "失注" }
+  ],
+  "kakudo": [
+    { "code": "K001", "name": "高" },
+    { "code": "K002", "name": "中" },
+    { "code": "K003", "name": "低" }
+  ],
+  "talent": [
+    { "code": "T001", "name": "山田太郎" },
+    { "code": "T002", "name": "佐藤花子" },
+    { "code": "T003", "name": "鈴木一郎" },
+    { "code": "T004", "name": "田中美咲" },
+    { "code": "T005", "name": "高橋健太" },
+    { "code": "T006", "name": "伊藤さくら" },
+    { "code": "T007", "name": "渡辺雄大" },
+    { "code": "T008", "name": "中村愛" },
+    { "code": "T009", "name": "小林誠" },
+    { "code": "T010", "name": "加藤優子" }
+  ],
+  "koukokushu": [
+    { "code": "K001", "seishikimei": "株式会社サンプル商事" },
+    { "code": "K002", "seishikimei": "テスト食品株式会社" },
+    { "code": "K003", "seishikimei": "モック自動車工業" },
+    { "code": "K004", "seishikimei": "サンプル化粧品" },
+    { "code": "K005", "seishikimei": "テストビバレッジ" },
+    { "code": "K006", "seishikimei": "モックエレクトロニクス" },
+    { "code": "K007", "seishikimei": "サンプル通信" },
+    { "code": "K008", "seishikimei": "テスト製薬" },
+    { "code": "K009", "seishikimei": "モックファイナンス" },
+    { "code": "K010", "seishikimei": "サンプルリテール" }
+  ],
+  "media": [
+    { "code": "M001", "name": "テレビ" },
+    { "code": "M002", "name": "ラジオ" },
+    { "code": "M003", "name": "新聞" },
+    { "code": "M004", "name": "雑誌" },
+    { "code": "M005", "name": "WEB" },
+    { "code": "M006", "name": "SNS" },
+    { "code": "M007", "name": "屋外広告" },
+    { "code": "M008", "name": "交通広告" },
+    { "code": "M009", "name": "イベント" },
+    { "code": "M010", "name": "その他" }
+  ],
+  "himoku": [
+    { "code": "H001", "name": "タレント出演料" },
+    { "code": "H002", "name": "制作費" },
+    { "code": "H003", "name": "媒体費" },
+    { "code": "H004", "name": "その他" }
+  ],
+  "dceTantobu": [
+    { "code": "D001", "name": "山本太郎" },
+    { "code": "D002", "name": "木村花子" },
+    { "code": "D003", "name": "斎藤健" },
+    { "code": "D004", "name": "松本美優" },
+    { "code": "D005", "name": "井上大輔" },
+    { "code": "D006", "name": "森田愛子" },
+    { "code": "D007", "name": "橋本誠一" },
+    { "code": "D008", "name": "清水恵" }
+  ],
+  "kyougohani": [
+    "飲料全般",
+    "食品全般",
+    "自動車全般",
+    "化粧品全般",
+    "金融全般",
+    "通信全般",
+    "製薬全般",
+    "家電全般"
+  ],
+  "shiyoukikan": [
+    "1年",
+    "2年",
+    "3年",
+    "6ヶ月",
+    "その他"
+  ],
+  "shiyochiiki": [
+    "全国",
+    "関東",
+    "関西",
+    "中部",
+    "その他"
+  ],
+  "teianKahi": [
+    "可",
+    "不可",
+    "条件付き可"
+  ],
+  "shokaiShutsuryoKubun": [
+    "有り",
+    "無し",
+    "要相談"
+  ]
+}
+
