@@ -8,8 +8,7 @@ import {
   Button,
   Card,
   CardContent,
-  Tabs,
-  Tab,
+  Stack,
 } from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
 import Header from '@/components/Header';
@@ -22,25 +21,9 @@ import EigyoEigyoSection from '@/components/eigyo/EigyoEigyoSection';
 import EigyoJimushoSection from '@/components/eigyo/EigyoJimushoSection';
 import EigyoKanriSection from '@/components/eigyo/EigyoKanriSection';
 
-interface TabPanelProps {
-  children?: React.ReactNode;
-  index: number;
-  value: number;
-}
-
-function TabPanel(props: TabPanelProps) {
-  const { children, value, index, ...other } = props;
-  return (
-    <div hidden={value !== index} {...other}>
-      {value === index && <Box sx={{ py: 3 }}>{children}</Box>}
-    </div>
-  );
-}
-
 export default function EigyoNewPage() {
   const router = useRouter();
   const { addEigyo, masters, eigyoList } = useData();
-  const [tabValue, setTabValue] = useState(0);
   const [formData, setFormData] = useState<EigyoInfo>({
     id: `E${String(eigyoList.length + 1).padStart(3, '0')}`,
     koukokushu: '',
@@ -157,75 +140,69 @@ export default function EigyoNewPage() {
       <Header title="営業情報新規作成" showBack={true} />
       
       <Container maxWidth="md" sx={{ py: 3 }}>
-        <Card>
-          <CardContent>
-            <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
-              <Tabs
-                value={tabValue}
-                onChange={(_, newValue) => setTabValue(newValue)}
-                variant="scrollable"
-                scrollButtons="auto"
-              >
-                <Tab label="基本情報" />
-                <Tab label="金額" />
-                <Tab label="出演情報" />
-                <Tab label="営業情報" />
-                <Tab label="事務所情報" />
-                <Tab label="社内管理情報" />
-              </Tabs>
-            </Box>
-
-            {/* 基本情報 Tab */}
-            <TabPanel value={tabValue} index={0}>
+        <Stack spacing={3}>
+          {/* 基本情報 */}
+          <Card>
+            <CardContent>
               <EigyoBasicInfoSection
                 data={formData}
                 onChange={handleFieldChange}
                 masters={masters}
               />
-            </TabPanel>
+            </CardContent>
+          </Card>
 
-            {/* 金額 Tab */}
-            <TabPanel value={tabValue} index={1}>
+          {/* 金額 */}
+          <Card>
+            <CardContent>
               <EigyoKingakuSection
                 data={formData}
                 onChange={handleFieldChange}
               />
-            </TabPanel>
+            </CardContent>
+          </Card>
 
-            {/* 出演情報 Tab */}
-            <TabPanel value={tabValue} index={2}>
+          {/* 出演情報 */}
+          <Card>
+            <CardContent>
               <EigyoShutsuenSection
                 data={formData}
                 onChange={handleFieldChange}
               />
-            </TabPanel>
+            </CardContent>
+          </Card>
 
-            {/* 営業情報 Tab */}
-            <TabPanel value={tabValue} index={3}>
+          {/* 営業情報 */}
+          <Card>
+            <CardContent>
               <EigyoEigyoSection
                 data={formData}
                 onChange={handleFieldChange}
               />
-            </TabPanel>
+            </CardContent>
+          </Card>
 
-            {/* 事務所情報 Tab */}
-            <TabPanel value={tabValue} index={4}>
+          {/* 事務所情報 */}
+          <Card>
+            <CardContent>
               <EigyoJimushoSection
                 data={formData}
                 onChange={handleFieldChange}
               />
-            </TabPanel>
+            </CardContent>
+          </Card>
 
-            {/* 社内管理情報 Tab */}
-            <TabPanel value={tabValue} index={5}>
+          {/* 社内管理情報 */}
+          <Card>
+            <CardContent>
               <EigyoKanriSection
                 data={formData}
                 onChange={handleFieldChange}
                 masters={masters}
               />
-            </TabPanel>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </Stack>
 
         <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
           <Button
