@@ -105,9 +105,10 @@ export default function EigyoListPage() {
         <Collapse in={showFilters}>
           <Card sx={{ mb: 3 }}>
             <CardContent>
-              <Stack spacing={2}>
+              <Stack spacing={1.5}>
                 <TextField
                   fullWidth
+                  size="small"
                   label="広告主"
                   value={searchFilters.koukokushu}
                   onChange={(e) => {
@@ -117,6 +118,7 @@ export default function EigyoListPage() {
                 />
                 <TextField
                   fullWidth
+                  size="small"
                   label="タレント名"
                   value={searchFilters.talent}
                   onChange={(e) => {
@@ -124,7 +126,7 @@ export default function EigyoListPage() {
                     handleFilterChange();
                   }}
                 />
-                <FormControl fullWidth>
+                <FormControl fullWidth size="small">
                   <InputLabel>ステータス</InputLabel>
                   <Select
                     value={searchFilters.status}
@@ -144,6 +146,7 @@ export default function EigyoListPage() {
                 </FormControl>
                 <Button
                   fullWidth
+                  size="small"
                   variant="outlined"
                   onClick={() => {
                     setSearchFilters({ koukokushu: '', talent: '', status: '' });
