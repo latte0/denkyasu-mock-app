@@ -1,7 +1,8 @@
 'use client';
 
-import { Box, TextField, FormControl, InputLabel, Select, MenuItem, Stack, FormControlLabel, Checkbox, Typography, Chip } from '@mui/material';
+import { Box, TextField, FormControl, InputLabel, Select, MenuItem, Stack, FormControlLabel, Checkbox, Typography } from '@mui/material';
 import SectionTitle from '@/components/common/SectionTitle';
+import EditableChipList from '@/components/common/EditableChipList';
 import { EigyoInfo, MasterData } from '@/types';
 
 interface EigyoBasicInfoSectionProps {
@@ -148,16 +149,12 @@ export default function EigyoBasicInfoSection({ data, onChange, masters }: Eigyo
       <Box>
         <SectionTitle title="タレント・費目" />
         <Stack spacing={1.5}>
-          <Box>
-            <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 0.5 }}>
-              タレント
-            </Typography>
-            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-              {data.talent.map((t, idx) => (
-                <Chip key={idx} label={t} size="small" />
-              ))}
-            </Stack>
-          </Box>
+          <EditableChipList
+            label="タレント"
+            items={data.talent}
+            onChange={(items) => onChange({ talent: items })}
+            color="primary"
+          />
           <FormControl fullWidth size="small">
             <InputLabel>費目</InputLabel>
             <Select

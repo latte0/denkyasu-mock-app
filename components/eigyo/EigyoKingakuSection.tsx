@@ -1,6 +1,6 @@
 'use client';
 
-import { Box, TextField, Stack, Typography } from '@mui/material';
+import { Box, TextField, Typography } from '@mui/material';
 import SectionTitle from '@/components/common/SectionTitle';
 import { EigyoInfo } from '@/types';
 
@@ -10,120 +10,91 @@ interface EigyoKingakuSectionProps {
 }
 
 export default function EigyoKingakuSection({ data, onChange }: EigyoKingakuSectionProps) {
+  const MoneyField = ({ label, value, onChange: onFieldChange, highlight = false }: any) => (
+    <Box sx={{ flex: 1, minWidth: '200px' }}>
+      <TextField
+        fullWidth
+        size="small"
+        type="number"
+        label={label}
+        value={value}
+        onChange={onFieldChange}
+        InputProps={{
+          startAdornment: <Typography sx={{ mr: 1, fontSize: '0.875rem' }}>¥</Typography>,
+        }}
+        helperText={`${(value / 10000).toLocaleString()}万円`}
+        sx={highlight ? {
+          '& .MuiOutlinedInput-root': { 
+            backgroundColor: 'rgba(76, 175, 80, 0.08)',
+            fontWeight: 'bold',
+          }
+        } : {}}
+      />
+    </Box>
+  );
+
   return (
-    <Stack spacing={2.5}>
-      <Box>
-        <SectionTitle title="契約料" />
-        <Stack spacing={1.5}>
-          <TextField
-            fullWidth
-            size="small"
-            type="number"
-            label="電通 他→DCE"
-            value={data.keiyakuryoDentsuToDce}
-            onChange={(e) => onChange({ keiyakuryoDentsuToDce: Number(e.target.value) })}
-            InputProps={{
-              startAdornment: <Typography sx={{ mr: 1 }}>¥</Typography>,
-            }}
-            helperText={`${(data.keiyakuryoDentsuToDce / 10000).toLocaleString()}万円`}
-          />
-          <TextField
-            fullWidth
-            size="small"
-            type="number"
-            label="DCE→事務所 他"
-            value={data.keiyakuryoDceToJimusho}
-            onChange={(e) => onChange({ keiyakuryoDceToJimusho: Number(e.target.value) })}
-            InputProps={{
-              startAdornment: <Typography sx={{ mr: 1 }}>¥</Typography>,
-            }}
-            helperText={`${(data.keiyakuryoDceToJimusho / 10000).toLocaleString()}万円`}
-          />
-          <TextField
-            fullWidth
-            size="small"
-            type="number"
-            label="差額利益"
-            value={data.sagakuRieki}
-            onChange={(e) => onChange({ sagakuRieki: Number(e.target.value) })}
-            InputProps={{
-              startAdornment: <Typography sx={{ mr: 1 }}>¥</Typography>,
-            }}
-            helperText={`${(data.sagakuRieki / 10000).toLocaleString()}万円`}
-            sx={{ 
-              '& .MuiOutlinedInput-root': { 
-                backgroundColor: 'rgba(76, 175, 80, 0.05)' 
-              }
-            }}
-          />
-        </Stack>
+    <Box>
+      <SectionTitle title="金額情報" />
+      
+      {/* 契約料 */}
+      <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 2, mb: 1, fontWeight: 'bold' }}>
+        契約料
+      </Typography>
+      <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 2 }}>
+        <MoneyField
+          label="電通 他→DCE"
+          value={data.keiyakuryoDentsuToDce}
+          onChange={(e: any) => onChange({ keiyakuryoDentsuToDce: Number(e.target.value) })}
+        />
+        <MoneyField
+          label="DCE→事務所 他"
+          value={data.keiyakuryoDceToJimusho}
+          onChange={(e: any) => onChange({ keiyakuryoDceToJimusho: Number(e.target.value) })}
+        />
+        <MoneyField
+          label="差額利益"
+          value={data.sagakuRieki}
+          onChange={(e: any) => onChange({ sagakuRieki: Number(e.target.value) })}
+          highlight={true}
+        />
       </Box>
 
-      <Box>
-        <SectionTitle title="手数料" />
-        <Stack spacing={1.5}>
-          <TextField
-            fullWidth
-            size="small"
-            type="number"
-            label="手数料（本社）"
-            value={data.tesuuryoHonsha}
-            onChange={(e) => onChange({ tesuuryoHonsha: Number(e.target.value) })}
-            InputProps={{
-              startAdornment: <Typography sx={{ mr: 1 }}>¥</Typography>,
-            }}
-            helperText={`${(data.tesuuryoHonsha / 10000).toLocaleString()}万円`}
-          />
-          <TextField
-            fullWidth
-            size="small"
-            type="number"
-            label="手数料（DCE）"
-            value={data.tesuuryoDce}
-            onChange={(e) => onChange({ tesuuryoDce: Number(e.target.value) })}
-            InputProps={{
-              startAdornment: <Typography sx={{ mr: 1 }}>¥</Typography>,
-            }}
-            helperText={`${(data.tesuuryoDce / 10000).toLocaleString()}万円`}
-          />
-        </Stack>
+      {/* 手数料 */}
+      <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 2, mb: 1, fontWeight: 'bold' }}>
+        手数料
+      </Typography>
+      <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 2 }}>
+        <MoneyField
+          label="本社"
+          value={data.tesuuryoHonsha}
+          onChange={(e: any) => onChange({ tesuuryoHonsha: Number(e.target.value) })}
+        />
+        <MoneyField
+          label="DCE"
+          value={data.tesuuryoDce}
+          onChange={(e: any) => onChange({ tesuuryoDce: Number(e.target.value) })}
+        />
       </Box>
 
-      <Box>
-        <SectionTitle title="利益・管理費" />
-        <Stack spacing={1.5}>
-          <TextField
-            fullWidth
-            size="small"
-            type="number"
-            label="DCE総利益"
-            value={data.dceSouRieki}
-            onChange={(e) => onChange({ dceSouRieki: Number(e.target.value) })}
-            InputProps={{
-              startAdornment: <Typography sx={{ mr: 1 }}>¥</Typography>,
-            }}
-            helperText={`${(data.dceSouRieki / 10000).toLocaleString()}万円`}
-            sx={{ 
-              '& .MuiOutlinedInput-root': { 
-                backgroundColor: 'rgba(33, 150, 243, 0.05)' 
-              }
-            }}
-          />
-          <TextField
-            fullWidth
-            size="small"
-            type="number"
-            label="企業管理費"
-            value={data.kigyoKanrihi}
-            onChange={(e) => onChange({ kigyoKanrihi: Number(e.target.value) })}
-            InputProps={{
-              startAdornment: <Typography sx={{ mr: 1 }}>¥</Typography>,
-            }}
-            helperText={`${(data.kigyoKanrihi / 10000).toLocaleString()}万円`}
-          />
-        </Stack>
+      {/* 利益・管理費 */}
+      <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 2, mb: 1, fontWeight: 'bold' }}>
+        利益・管理費
+      </Typography>
+      <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+        <MoneyField
+          label="DCE総利益"
+          value={data.dceSouRieki}
+          onChange={(e: any) => onChange({ dceSouRieki: Number(e.target.value) })}
+          highlight={true}
+        />
+        <MoneyField
+          label="企業管理費"
+          value={data.kigyoKanrihi}
+          onChange={(e: any) => onChange({ kigyoKanrihi: Number(e.target.value) })}
+        />
       </Box>
-    </Stack>
+    </Box>
   );
 }
 
