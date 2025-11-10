@@ -1,4 +1,4 @@
-import { Box, TextField, FormControl, Select, MenuItem, Stack, Typography } from '@mui/material';
+import { Box, TextField, FormControl, InputLabel, Select, MenuItem, Stack, Typography } from '@mui/material';
 import SectionTitle from '@/components/common/SectionTitle';
 import EditableTable from '@/components/common/EditableTable';
 import { EigyoInfo, MasterData } from '@/types';

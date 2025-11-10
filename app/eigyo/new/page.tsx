@@ -5,25 +5,22 @@ import { useRouter } from 'next/navigation';
 import {
   Container,
   Box,
-  TextField,
   Button,
   Card,
   CardContent,
-  Typography,
   Tabs,
   Tab,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Checkbox,
-  FormControlLabel,
-  Stack,
 } from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
 import Header from '@/components/Header';
 import { useData } from '@/context/DataContext';
 import { EigyoInfo } from '@/types';
+import EigyoBasicInfoSection from '@/components/eigyo/EigyoBasicInfoSection';
+import EigyoKingakuSection from '@/components/eigyo/EigyoKingakuSection';
+import EigyoShutsuenSection from '@/components/eigyo/EigyoShutsuenSection';
+import EigyoEigyoSection from '@/components/eigyo/EigyoEigyoSection';
+import EigyoJimushoSection from '@/components/eigyo/EigyoJimushoSection';
+import EigyoKanriSection from '@/components/eigyo/EigyoKanriSection';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -151,6 +148,10 @@ export default function EigyoNewPage() {
     router.push('/eigyo');
   };
 
+  const handleFieldChange = (updates: Partial<EigyoInfo>) => {
+    setFormData({ ...formData, ...updates });
+  };
+
   return (
     <Box sx={{ minHeight: '100vh', backgroundColor: '#f5f5f5', pb: 10 }}>
       <Header title="営業情報新規作成" showBack={true} />
@@ -176,237 +177,52 @@ export default function EigyoNewPage() {
 
             {/* 基本情報 Tab */}
             <TabPanel value={tabValue} index={0}>
-              <Stack spacing={2}>
-                <TextField
-                  fullWidth
-                  label="広告主"
-                  required
-                  value={formData.koukokushu}
-                  onChange={(e) => setFormData({ ...formData, koukokushu: e.target.value })}
-                />
-                <FormControl fullWidth>
-                  <InputLabel>営業局</InputLabel>
-                  <Select
-                    value={formData.eigyokyoku}
-                    label="営業局"
-                    onChange={(e) => setFormData({ ...formData, eigyokyoku: e.target.value })}
-                  >
-                    {masters.eigyokyoku.map((item) => (
-                      <MenuItem key={item.code} value={item.name}>
-                        {item.name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-                <TextField
-                  fullWidth
-                  label="商品・サービス"
-                  required
-                  value={formData.shohinService}
-                  onChange={(e) => setFormData({ ...formData, shohinService: e.target.value })}
-                />
-                <FormControl fullWidth>
-                  <InputLabel>ステータス</InputLabel>
-                  <Select
-                    value={formData.status}
-                    label="ステータス"
-                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                  >
-                    {masters.status.map((item) => (
-                      <MenuItem key={item.code} value={item.name}>
-                        {item.name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-                <FormControl fullWidth>
-                  <InputLabel>確度</InputLabel>
-                  <Select
-                    value={formData.kakudo}
-                    label="確度"
-                    onChange={(e) => setFormData({ ...formData, kakudo: e.target.value })}
-                  >
-                    {masters.kakudo.map((item) => (
-                      <MenuItem key={item.code} value={item.name}>
-                        {item.name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-                <TextField
-                  fullWidth
-                  type="date"
-                  label="契約開始"
-                  value={formData.keiyakuKaishiDate}
-                  onChange={(e) => setFormData({ ...formData, keiyakuKaishiDate: e.target.value })}
-                  InputLabelProps={{ shrink: true }}
-                />
-                <TextField
-                  fullWidth
-                  type="date"
-                  label="契約終了"
-                  value={formData.keiyakuShuryoDate}
-                  onChange={(e) => setFormData({ ...formData, keiyakuShuryoDate: e.target.value })}
-                  InputLabelProps={{ shrink: true }}
-                />
-                <TextField
-                  fullWidth
-                  type="date"
-                  label="納品日"
-                  value={formData.nouhinbiDate}
-                  onChange={(e) => setFormData({ ...formData, nouhinbiDate: e.target.value })}
-                  InputLabelProps={{ shrink: true }}
-                />
-                <FormControl fullWidth>
-                  <InputLabel>費目</InputLabel>
-                  <Select
-                    value={formData.himoku}
-                    label="費目"
-                    onChange={(e) => setFormData({ ...formData, himoku: e.target.value })}
-                  >
-                    {masters.himoku.map((item) => (
-                      <MenuItem key={item.code} value={item.name}>
-                        {item.name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Stack>
+              <EigyoBasicInfoSection
+                data={formData}
+                onChange={handleFieldChange}
+                masters={masters}
+              />
             </TabPanel>
 
             {/* 金額 Tab */}
             <TabPanel value={tabValue} index={1}>
-              <Stack spacing={2}>
-                <TextField
-                  fullWidth
-                  type="number"
-                  label="契約料（電通 他→DCE）"
-                  value={formData.keiyakuryoDentsuToDce}
-                  onChange={(e) => setFormData({ ...formData, keiyakuryoDentsuToDce: Number(e.target.value) })}
-                />
-                <TextField
-                  fullWidth
-                  type="number"
-                  label="契約料（DCE→事務所 他）"
-                  value={formData.keiyakuryoDceToJimusho}
-                  onChange={(e) => setFormData({ ...formData, keiyakuryoDceToJimusho: Number(e.target.value) })}
-                />
-                <TextField
-                  fullWidth
-                  type="number"
-                  label="手数料（本社）"
-                  value={formData.tesuuryoHonsha}
-                  onChange={(e) => setFormData({ ...formData, tesuuryoHonsha: Number(e.target.value) })}
-                />
-                <TextField
-                  fullWidth
-                  type="number"
-                  label="手数料（DCE）"
-                  value={formData.tesuuryoDce}
-                  onChange={(e) => setFormData({ ...formData, tesuuryoDce: Number(e.target.value) })}
-                />
-              </Stack>
+              <EigyoKingakuSection
+                data={formData}
+                onChange={handleFieldChange}
+              />
             </TabPanel>
 
             {/* 出演情報 Tab */}
             <TabPanel value={tabValue} index={2}>
-              <Stack spacing={2}>
-                <TextField
-                  fullWidth
-                  type="date"
-                  label="初回出演日"
-                  value={formData.shokaiShutsuenbiDate}
-                  onChange={(e) => setFormData({ ...formData, shokaiShutsuenbiDate: e.target.value })}
-                  InputLabelProps={{ shrink: true }}
-                />
-                <TextField
-                  fullWidth
-                  label="その他分類"
-                  value={formData.sonotaBunrui}
-                  onChange={(e) => setFormData({ ...formData, sonotaBunrui: e.target.value })}
-                />
-              </Stack>
+              <EigyoShutsuenSection
+                data={formData}
+                onChange={handleFieldChange}
+              />
             </TabPanel>
 
             {/* 営業情報 Tab */}
             <TabPanel value={tabValue} index={3}>
-              <Stack spacing={2}>
-                <TextField
-                  fullWidth
-                  label="担当営業"
-                  value={formData.tantoEigyo}
-                  onChange={(e) => setFormData({ ...formData, tantoEigyo: e.target.value })}
-                />
-                <TextField
-                  fullWidth
-                  label="担当CD"
-                  value={formData.tantoCdText}
-                  onChange={(e) => setFormData({ ...formData, tantoCdText: e.target.value })}
-                />
-                <TextField
-                  fullWidth
-                  label="担当CP"
-                  value={formData.tantoCp}
-                  onChange={(e) => setFormData({ ...formData, tantoCp: e.target.value })}
-                />
-              </Stack>
+              <EigyoEigyoSection
+                data={formData}
+                onChange={handleFieldChange}
+              />
             </TabPanel>
 
             {/* 事務所情報 Tab */}
             <TabPanel value={tabValue} index={4}>
-              <Stack spacing={2}>
-                <TextField
-                  fullWidth
-                  label="所属事務所"
-                  value={formData.shozokuJimusho}
-                  onChange={(e) => setFormData({ ...formData, shozokuJimusho: e.target.value })}
-                />
-                <TextField
-                  fullWidth
-                  label="事務所担当者"
-                  value={formData.jimushoTantosha}
-                  onChange={(e) => setFormData({ ...formData, jimushoTantosha: e.target.value })}
-                />
-              </Stack>
+              <EigyoJimushoSection
+                data={formData}
+                onChange={handleFieldChange}
+              />
             </TabPanel>
 
             {/* 社内管理情報 Tab */}
             <TabPanel value={tabValue} index={5}>
-              <Stack spacing={2}>
-                <Box sx={{ display: 'flex', gap: 2 }}>
-                  <FormControl sx={{ flex: 2 }}>
-                    <InputLabel>DCE担当者_1</InputLabel>
-                    <Select
-                      value={formData.dceTantosha1}
-                      label="DCE担当者_1"
-                      onChange={(e) => setFormData({ ...formData, dceTantosha1: e.target.value })}
-                    >
-                      {masters.dceTantobu.map((item) => (
-                        <MenuItem key={item.code} value={item.name}>
-                          {item.name}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                  <Box sx={{ flex: 1 }}>
-                    <TextField
-                      fullWidth
-                      type="number"
-                      label="%"
-                      value={formData.dceTantosha1Percent}
-                      onChange={(e) => setFormData({ ...formData, dceTantosha1Percent: Number(e.target.value) })}
-                    />
-                  </Box>
-                </Box>
-                <TextField
-                  fullWidth
-                  multiline
-                  rows={3}
-                  label="業務内容"
-                  value={formData.gyomuNaiyo}
-                  onChange={(e) => setFormData({ ...formData, gyomuNaiyo: e.target.value })}
-                />
-              </Stack>
+              <EigyoKanriSection
+                data={formData}
+                onChange={handleFieldChange}
+                masters={masters}
+              />
             </TabPanel>
           </CardContent>
         </Card>
