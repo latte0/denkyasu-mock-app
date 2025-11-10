@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Container,
@@ -17,25 +17,31 @@ import {
   Chip,
   Stack,
   Fab,
+  Pagination,
+  Collapse,
+  IconButton,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import SearchIcon from '@mui/icons-material/Search';
+import FilterListIcon from '@mui/icons-material/FilterList';
 import Header from '@/components/Header';
 import { useData } from '@/context/DataContext';
+
+const ITEMS_PER_PAGE = 10;
 
 export default function EigyoListPage() {
   const router = useRouter();
   const { eigyoList, masters } = useData();
+  const [page, setPage] = useState(1);
+  const [showFilters, setShowFilters] = useState(false);
   const [searchFilters, setSearchFilters] = useState({
     koukokushu: '',
     talent: '',
     status: '',
   });
-  const [filteredResults, setFilteredResults] = useState(eigyoList);
-  const [showResults, setShowResults] = useState(false);
 
-  const handleSearch = () => {
-    const filtered = eigyoList.filter((item) => {
+  const filteredResults = useMemo(() => {
+    return eigyoList.filter((item) => {
       const matchKoukokushu = !searchFilters.koukokushu || 
         item.koukokushu.includes(searchFilters.koukokushu);
       const matchTalent = !searchFilters.talent || 
@@ -45,8 +51,22 @@ export default function EigyoListPage() {
       
       return matchKoukokushu && matchTalent && matchStatus;
     });
-    setFilteredResults(filtered);
-    setShowResults(true);
+  }, [eigyoList, searchFilters]);
+
+  const paginatedResults = useMemo(() => {
+    const startIndex = (page - 1) * ITEMS_PER_PAGE;
+    return filteredResults.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [filteredResults, page]);
+
+  const totalPages = Math.ceil(filteredResults.length / ITEMS_PER_PAGE);
+
+  const handlePageChange = (_: React.ChangeEvent<unknown>, value: number) => {
+    setPage(value);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleFilterChange = () => {
+    setPage(1); // Reset to first page when filters change
   };
 
   const getStatusColor = (status: string) => {
@@ -67,61 +87,79 @@ export default function EigyoListPage() {
       <Header title="営業情報" showBack={true} />
       
       <Container maxWidth="md" sx={{ py: 3 }}>
+        {/* Filter Toggle */}
+        <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Typography variant="h6">
+            営業情報一覧 ({filteredResults.length}件)
+          </Typography>
+          <Button
+            variant="outlined"
+            startIcon={<FilterListIcon />}
+            onClick={() => setShowFilters(!showFilters)}
+          >
+            絞り込み
+          </Button>
+        </Box>
+
         {/* Search Form */}
-        <Card sx={{ mb: 3 }}>
-          <CardContent>
-            <Typography variant="h6" gutterBottom>
-              検索条件
-            </Typography>
-            <Stack spacing={2}>
-              <TextField
-                fullWidth
-                label="広告主"
-                value={searchFilters.koukokushu}
-                onChange={(e) => setSearchFilters({ ...searchFilters, koukokushu: e.target.value })}
-              />
-              <TextField
-                fullWidth
-                label="タレント名"
-                value={searchFilters.talent}
-                onChange={(e) => setSearchFilters({ ...searchFilters, talent: e.target.value })}
-              />
-              <FormControl fullWidth>
-                <InputLabel>ステータス</InputLabel>
-                <Select
-                  value={searchFilters.status}
-                  label="ステータス"
-                  onChange={(e) => setSearchFilters({ ...searchFilters, status: e.target.value })}
+        <Collapse in={showFilters}>
+          <Card sx={{ mb: 3 }}>
+            <CardContent>
+              <Stack spacing={2}>
+                <TextField
+                  fullWidth
+                  label="広告主"
+                  value={searchFilters.koukokushu}
+                  onChange={(e) => {
+                    setSearchFilters({ ...searchFilters, koukokushu: e.target.value });
+                    handleFilterChange();
+                  }}
+                />
+                <TextField
+                  fullWidth
+                  label="タレント名"
+                  value={searchFilters.talent}
+                  onChange={(e) => {
+                    setSearchFilters({ ...searchFilters, talent: e.target.value });
+                    handleFilterChange();
+                  }}
+                />
+                <FormControl fullWidth>
+                  <InputLabel>ステータス</InputLabel>
+                  <Select
+                    value={searchFilters.status}
+                    label="ステータス"
+                    onChange={(e) => {
+                      setSearchFilters({ ...searchFilters, status: e.target.value });
+                      handleFilterChange();
+                    }}
+                  >
+                    <MenuItem value="">すべて</MenuItem>
+                    {masters.status.map((s) => (
+                      <MenuItem key={s.code} value={s.name}>
+                        {s.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  onClick={() => {
+                    setSearchFilters({ koukokushu: '', talent: '', status: '' });
+                    setPage(1);
+                  }}
                 >
-                  <MenuItem value="">すべて</MenuItem>
-                  {masters.status.map((s) => (
-                    <MenuItem key={s.code} value={s.name}>
-                      {s.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-              <Button
-                fullWidth
-                variant="contained"
-                startIcon={<SearchIcon />}
-                onClick={handleSearch}
-                size="large"
-              >
-                検索
-              </Button>
-            </Stack>
-          </CardContent>
-        </Card>
+                  クリア
+                </Button>
+              </Stack>
+            </CardContent>
+          </Card>
+        </Collapse>
 
         {/* Results */}
-        {showResults && (
-          <Box>
-            <Typography variant="h6" gutterBottom>
-              検索結果 ({filteredResults.length}件)
-            </Typography>
-            <Stack spacing={2}>
-              {filteredResults.map((item) => (
+        <Stack spacing={2}>
+          {paginatedResults.map((item) => (
                 <Card
                   key={item.id}
                   sx={{
@@ -191,18 +229,32 @@ export default function EigyoListPage() {
                   </CardContent>
                 </Card>
               ))}
-              {filteredResults.length === 0 && (
-                <Card>
-                  <CardContent>
-                    <Typography variant="body1" color="text.secondary" align="center">
-                      該当する案件が見つかりませんでした
-                    </Typography>
-                  </CardContent>
-                </Card>
-              )}
             </Stack>
-          </Box>
-        )}
+
+            {/* Pagination */}
+            {filteredResults.length > 0 && totalPages > 1 && (
+              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+                <Pagination
+                  count={totalPages}
+                  page={page}
+                  onChange={handlePageChange}
+                  color="primary"
+                  size="large"
+                  showFirstButton
+                  showLastButton
+                />
+              </Box>
+            )}
+
+            {filteredResults.length === 0 && (
+              <Card>
+                <CardContent>
+                  <Typography variant="body1" color="text.secondary" align="center">
+                    該当する案件が見つかりませんでした
+                  </Typography>
+                </CardContent>
+              </Card>
+            )}
       </Container>
 
       {/* Floating Action Button */}
