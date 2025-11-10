@@ -1,3 +1,5 @@
+'use client';
+
 import { Box, TextField, FormControl, InputLabel, Select, MenuItem, Stack, FormControlLabel, Checkbox, Typography, Chip } from '@mui/material';
 import SectionTitle from '@/components/common/SectionTitle';
 import { EigyoInfo, MasterData } from '@/types';

@@ -1,3 +1,5 @@
+'use client';
+
 import { Box, TextField, Stack, Typography, Chip } from '@mui/material';
 import SectionTitle from '@/components/common/SectionTitle';
 import { EigyoInfo } from '@/types';
