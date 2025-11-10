@@ -1,32 +1,7 @@
 import type { Metadata } from "next";
-import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
-import { ThemeProvider } from '@mui/material/styles';
-import CssBaseline from '@mui/material/CssBaseline';
-import { createTheme } from '@mui/material/styles';
 import { DataProvider } from '@/context/DataContext';
+import ThemeRegistry from '@/components/ThemeRegistry';
 import "./globals.css";
-
-const theme = createTheme({
-  palette: {
-    primary: {
-      main: '#d32f2f',
-    },
-    secondary: {
-      main: '#1976d2',
-    },
-  },
-  typography: {
-    fontFamily: [
-      '-apple-system',
-      'BlinkMacSystemFont',
-      '"Segoe UI"',
-      'Roboto',
-      '"Helvetica Neue"',
-      'Arial',
-      'sans-serif',
-    ].join(','),
-  },
-});
 
 export const metadata: Metadata = {
   title: "dentsu Mock App",
@@ -41,14 +16,11 @@ export default function RootLayout({
   return (
     <html lang="ja">
       <body>
-        <AppRouterCacheProvider>
-          <ThemeProvider theme={theme}>
-            <CssBaseline />
-            <DataProvider>
-              {children}
-            </DataProvider>
-          </ThemeProvider>
-        </AppRouterCacheProvider>
+        <ThemeRegistry>
+          <DataProvider>
+            {children}
+          </DataProvider>
+        </ThemeRegistry>
       </body>
     </html>
   );
