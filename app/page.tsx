@@ -10,16 +10,12 @@ import {
   Button,
   Typography,
   Box,
-  RadioGroup,
-  FormControlLabel,
-  Radio,
 } from '@mui/material';
 
 export default function LoginPage() {
   const router = useRouter();
   const [id, setId] = useState('');
   const [password, setPassword] = useState('');
-  const [userType, setUserType] = useState('eigyo');
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,24 +49,6 @@ export default function LoginPage() {
           </Box>
 
           <form onSubmit={handleLogin}>
-            <RadioGroup
-              row
-              value={userType}
-              onChange={(e) => setUserType(e.target.value)}
-              sx={{ justifyContent: 'center', mb: 3 }}
-            >
-              <FormControlLabel
-                value="eigyo"
-                control={<Radio />}
-                label="営業職 ⊕"
-              />
-              <FormControlLabel
-                value="atari"
-                control={<Radio />}
-                label="アタリ職 ⊙"
-              />
-            </RadioGroup>
-
             <TextField
               fullWidth
               label="ID"
