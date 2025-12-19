@@ -12,6 +12,7 @@ import {
   Alert,
   Collapse,
   Typography,
+  CircularProgress,
 } from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
 import AudioFileIcon from '@mui/icons-material/AudioFile';
@@ -30,6 +31,7 @@ export default function EigyoNewForm() {
   const searchParams = useSearchParams();
   const { addEigyo, masters, eigyoList } = useData();
   const [transcriptText, setTranscriptText] = useState<string | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
   const [formData, setFormData] = useState<EigyoInfo>({
     id: `E${String(eigyoList.length + 1).padStart(3, '0')}`,
     koukokushu: '',
@@ -193,6 +195,9 @@ export default function EigyoNewForm() {
 
   // URLパラメータから文字起こしテキストを取得
   useEffect(() => {
+    // 既に初期化済みの場合はスキップ
+    if (isInitialized) return;
+    
     const transcript = searchParams.get('transcript');
     if (transcript) {
       try {
@@ -207,11 +212,16 @@ export default function EigyoNewForm() {
           ...extractedInfo,
           gyomuNaiyo: decoded, // 元のテキストも業務内容に保存
         }));
+        setIsInitialized(true);
       } catch (e) {
         console.error('Failed to decode transcript:', e);
+        setIsInitialized(true);
       }
+    } else {
+      // transcriptパラメータがない場合も初期化完了とする
+      setIsInitialized(true);
     }
-  }, [searchParams]);
+  }, [searchParams, isInitialized]);
 
   const handleSave = () => {
     if (!formData.koukokushu || !formData.shohinService) {
@@ -226,6 +236,20 @@ export default function EigyoNewForm() {
   const handleFieldChange = (updates: Partial<EigyoInfo>) => {
     setFormData({ ...formData, ...updates });
   };
+
+  // transcriptパラメータがある場合は初期化完了まで待つ
+  const hasTranscriptParam = searchParams.get('transcript');
+  if (hasTranscriptParam && !isInitialized) {
+    return (
+      <Box sx={{ minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
+        <Header title="営業情報新規作成" showBack={true} />
+        <Container maxWidth="md" sx={{ py: 3, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+          <CircularProgress />
+          <Typography>音声データを解析中...</Typography>
+        </Container>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ minHeight: '100vh', backgroundColor: '#f5f5f5', pb: 10 }}>
