@@ -129,18 +129,17 @@ export default function EigyoNewForm() {
 
   // 文字起こしテキストから情報を抽出（モック）
   const extractInfoFromTranscript = (text: string): Partial<EigyoInfo> => {
-    // モック: 実際にはAIで解析するが、ここではキーワードベースで抽出
+    // モック: 実際にはAIで解析するが、ここでは音声内容に基づいて固定値を設定
     const extracted: Partial<EigyoInfo> = {};
     
-    // 広告主の抽出（〇〇株式会社、〇〇社など）
-    const companyMatch = text.match(/([ぁ-んァ-ン一-龥A-Za-z0-9]+)(株式会社|社)/);
-    if (companyMatch) {
-      extracted.koukokushu = companyMatch[0];
+    // 広告主の抽出（モックでは固定値 + テキスト内容から推測）
+    if (text.includes('株式会社') || text.includes('お世話になっております')) {
+      extracted.koukokushu = '株式会社サンプル化粧品';
     }
     
     // 商品・サービスの抽出
-    if (text.includes('化粧品')) {
-      extracted.shohinService = '化粧品（新ブランド）';
+    if (text.includes('化粧品') || text.includes('新ブランド')) {
+      extracted.shohinService = '化粧品（新ブランド）20代〜30代女性向け';
     } else if (text.includes('新商品')) {
       extracted.shohinService = '新商品CM';
     }
@@ -150,28 +149,23 @@ export default function EigyoNewForm() {
     if (amountMatch) {
       const amount = parseInt(amountMatch[1]);
       const unit = amountMatch[2];
-      // 万円単位に変換
+      // 万円単位に変換して円に
       const amountInMan = unit === '億円' ? amount * 10000 : amount;
       extracted.keiyakuryoDentsuToDce = amountInMan * 10000; // 円に変換
     }
     
-    // タレント名の抽出
-    const talentMatch = text.match(/第一候補として(.+?)さん/);
-    if (talentMatch) {
-      extracted.talent = [talentMatch[1] + 'さん'];
-    } else if (text.includes('タレント')) {
-      extracted.talent = ['（候補タレント）'];
+    // タレント名の抽出（モックでは固定値）
+    if (text.includes('タレント') || text.includes('候補')) {
+      extracted.talent = ['山田太郎'];
     }
     
     // 競合NGの抽出
-    if (text.includes('化粧品メーカー')) {
+    if (text.includes('化粧品メーカー') || text.includes('同業他社')) {
       extracted.kyougouNg = ['化粧品メーカー全般'];
-    } else if (text.includes('同業他社')) {
-      extracted.kyougouNg = ['同業他社'];
     }
     
     // 使用期間の抽出
-    if (text.includes('1年間')) {
+    if (text.includes('1年間') || text.includes('年間')) {
       // 契約開始日を今日から、終了日を1年後に設定
       const today = new Date();
       const nextYear = new Date(today);
@@ -181,14 +175,16 @@ export default function EigyoNewForm() {
     }
     
     // 撮影予定日の抽出
-    if (text.includes('来年1月')) {
+    if (text.includes('来年1月') || text.includes('1月')) {
       const nextYear = new Date().getFullYear() + 1;
       extracted.shokaiShutsuenbiDate = `${nextYear}-01-15`;
     }
     
     // 媒体の抽出
-    if (text.includes('テレビCM') || text.includes('WEB広告')) {
+    if (text.includes('テレビCM') || text.includes('テレビ')) {
       extracted.shutsuenryoTanka1Baitai = 'テレビCM';
+    }
+    if (text.includes('WEB広告') || text.includes('WEB')) {
       extracted.shutsuenryoTanka2Baitai = 'WEB広告';
     }
     
