@@ -138,6 +138,11 @@ export default function VoiceUploadPage() {
                   borderRadius: 2,
                   cursor: 'pointer',
                   transition: 'all 0.2s ease',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  minHeight: 200,
                   '&:hover': {
                     borderColor: 'primary.main',
                     backgroundColor: 'primary.50',
