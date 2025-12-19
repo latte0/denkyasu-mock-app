@@ -13,6 +13,7 @@ import {
 import BusinessIcon from '@mui/icons-material/Business';
 import InfoIcon from '@mui/icons-material/Info';
 import TimelineIcon from '@mui/icons-material/Timeline';
+import MicIcon from '@mui/icons-material/Mic';
 import Header from '@/components/Header';
 
 export default function TopPage() {
@@ -36,6 +37,12 @@ export default function TopPage() {
       icon: <TimelineIcon sx={{ fontSize: 48 }} />,
       path: '/shinchoku',
       color: '#ed6c02',
+    },
+    {
+      title: '音声アップロード',
+      icon: <MicIcon sx={{ fontSize: 48 }} />,
+      path: '/voice-upload',
+      color: '#9c27b0',
     },
   ];
 
@@ -92,4 +99,5 @@ export default function TopPage() {
     </Box>
   );
 }
+
 

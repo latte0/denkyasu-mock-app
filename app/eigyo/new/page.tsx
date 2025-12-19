@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Container,
   Box,
@@ -9,8 +9,12 @@ import {
   Card,
   CardContent,
   Stack,
+  Alert,
+  Collapse,
+  Typography,
 } from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
+import AudioFileIcon from '@mui/icons-material/AudioFile';
 import Header from '@/components/Header';
 import { useData } from '@/context/DataContext';
 import { EigyoInfo } from '@/types';
@@ -23,7 +27,9 @@ import EigyoKanriSection from '@/components/eigyo/EigyoKanriSection';
 
 export default function EigyoNewPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { addEigyo, masters, eigyoList } = useData();
+  const [transcriptText, setTranscriptText] = useState<string | null>(null);
   const [formData, setFormData] = useState<EigyoInfo>({
     id: `E${String(eigyoList.length + 1).padStart(3, '0')}`,
     koukokushu: '',
@@ -121,6 +127,24 @@ export default function EigyoNewPage() {
     shutsuenryoTanka5DceToJimusho: 0,
   });
 
+  // URLパラメータから文字起こしテキストを取得
+  useEffect(() => {
+    const transcript = searchParams.get('transcript');
+    if (transcript) {
+      try {
+        const decoded = decodeURIComponent(escape(atob(decodeURIComponent(transcript))));
+        setTranscriptText(decoded);
+        // 業務内容フィールドに自動入力
+        setFormData(prev => ({
+          ...prev,
+          gyomuNaiyo: decoded,
+        }));
+      } catch (e) {
+        console.error('Failed to decode transcript:', e);
+      }
+    }
+  }, [searchParams]);
+
   const handleSave = () => {
     if (!formData.koukokushu || !formData.shohinService) {
       alert('広告主と商品・サービスは必須です');
@@ -141,6 +165,22 @@ export default function EigyoNewPage() {
       
       <Container maxWidth="md" sx={{ py: 3 }}>
         <Stack spacing={3}>
+          {/* 音声文字起こしからの作成アラート */}
+          <Collapse in={!!transcriptText}>
+            <Alert 
+              severity="info" 
+              icon={<AudioFileIcon />}
+              sx={{ mb: 2 }}
+            >
+              <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
+                📝 音声文字起こしから作成中
+              </Typography>
+              <Typography variant="body2">
+                文字起こしテキストが「業務内容」に自動入力されています。必要に応じて編集してください。
+              </Typography>
+            </Alert>
+          </Collapse>
+
           {/* 基本情報 */}
           <Card>
             <CardContent>

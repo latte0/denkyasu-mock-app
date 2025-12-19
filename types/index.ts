@@ -217,3 +217,7 @@ export interface ShinchokuKanri {
   tantosha: string; // 担当者 (for display purposes)
 }
 
+
+
+
+

@@ -128,3 +128,4 @@ export default function EigyoBasicInfoSection({ data, onChange, masters }: Props
 - [ ] 必要に応じて表形式を使用
 - [ ] モバイルで表示崩れがないか確認
 
+
