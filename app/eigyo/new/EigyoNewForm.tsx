@@ -127,6 +127,74 @@ export default function EigyoNewForm() {
     shutsuenryoTanka5DceToJimusho: 0,
   });
 
+  // 文字起こしテキストから情報を抽出（モック）
+  const extractInfoFromTranscript = (text: string): Partial<EigyoInfo> => {
+    // モック: 実際にはAIで解析するが、ここではキーワードベースで抽出
+    const extracted: Partial<EigyoInfo> = {};
+    
+    // 広告主の抽出（〇〇株式会社、〇〇社など）
+    const companyMatch = text.match(/([ぁ-んァ-ン一-龥A-Za-z0-9]+)(株式会社|社)/);
+    if (companyMatch) {
+      extracted.koukokushu = companyMatch[0];
+    }
+    
+    // 商品・サービスの抽出
+    if (text.includes('化粧品')) {
+      extracted.shohinService = '化粧品（新ブランド）';
+    } else if (text.includes('新商品')) {
+      extracted.shohinService = '新商品CM';
+    }
+    
+    // 金額の抽出（〇〇万円、〇〇億円など）
+    const amountMatch = text.match(/(\d+)(万円|億円)/);
+    if (amountMatch) {
+      const amount = parseInt(amountMatch[1]);
+      const unit = amountMatch[2];
+      // 万円単位に変換
+      const amountInMan = unit === '億円' ? amount * 10000 : amount;
+      extracted.keiyakuryoDentsuToDce = amountInMan * 10000; // 円に変換
+    }
+    
+    // タレント名の抽出
+    const talentMatch = text.match(/第一候補として(.+?)さん/);
+    if (talentMatch) {
+      extracted.talent = [talentMatch[1] + 'さん'];
+    } else if (text.includes('タレント')) {
+      extracted.talent = ['（候補タレント）'];
+    }
+    
+    // 競合NGの抽出
+    if (text.includes('化粧品メーカー')) {
+      extracted.kyougouNg = ['化粧品メーカー全般'];
+    } else if (text.includes('同業他社')) {
+      extracted.kyougouNg = ['同業他社'];
+    }
+    
+    // 使用期間の抽出
+    if (text.includes('1年間')) {
+      // 契約開始日を今日から、終了日を1年後に設定
+      const today = new Date();
+      const nextYear = new Date(today);
+      nextYear.setFullYear(nextYear.getFullYear() + 1);
+      extracted.keiyakuKaishiDate = today.toISOString().split('T')[0];
+      extracted.keiyakuShuryoDate = nextYear.toISOString().split('T')[0];
+    }
+    
+    // 撮影予定日の抽出
+    if (text.includes('来年1月')) {
+      const nextYear = new Date().getFullYear() + 1;
+      extracted.shokaiShutsuenbiDate = `${nextYear}-01-15`;
+    }
+    
+    // 媒体の抽出
+    if (text.includes('テレビCM') || text.includes('WEB広告')) {
+      extracted.shutsuenryoTanka1Baitai = 'テレビCM';
+      extracted.shutsuenryoTanka2Baitai = 'WEB広告';
+    }
+    
+    return extracted;
+  };
+
   // URLパラメータから文字起こしテキストを取得
   useEffect(() => {
     const transcript = searchParams.get('transcript');
@@ -134,10 +202,14 @@ export default function EigyoNewForm() {
       try {
         const decoded = decodeURIComponent(escape(atob(decodeURIComponent(transcript))));
         setTranscriptText(decoded);
-        // 業務内容フィールドに自動入力
+        
+        // 文字起こしテキストから情報を抽出して自動入力
+        const extractedInfo = extractInfoFromTranscript(decoded);
+        
         setFormData(prev => ({
           ...prev,
-          gyomuNaiyo: decoded,
+          ...extractedInfo,
+          gyomuNaiyo: decoded, // 元のテキストも業務内容に保存
         }));
       } catch (e) {
         console.error('Failed to decode transcript:', e);
@@ -168,15 +240,26 @@ export default function EigyoNewForm() {
           {/* 音声文字起こしからの作成アラート */}
           <Collapse in={!!transcriptText}>
             <Alert 
-              severity="info" 
+              severity="success" 
               icon={<AudioFileIcon />}
               sx={{ mb: 2 }}
             >
-              <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
-                📝 音声文字起こしから作成中
+              <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1 }}>
+                ✨ 音声から情報を自動抽出しました
               </Typography>
-              <Typography variant="body2">
-                文字起こしテキストが「業務内容」に自動入力されています。必要に応じて編集してください。
+              <Typography variant="body2" component="div">
+                以下のフィールドに自動入力されました：
+                <Box component="ul" sx={{ m: 0, pl: 2, mt: 0.5 }}>
+                  {formData.koukokushu && <li>広告主: {formData.koukokushu}</li>}
+                  {formData.shohinService && <li>商品・サービス: {formData.shohinService}</li>}
+                  {formData.talent && formData.talent.length > 0 && <li>タレント: {formData.talent.join(', ')}</li>}
+                  {formData.keiyakuryoDentsuToDce > 0 && <li>契約料: {(formData.keiyakuryoDentsuToDce / 10000).toLocaleString()}万円</li>}
+                  {formData.kyougouNg && formData.kyougouNg.length > 0 && <li>競合NG: {formData.kyougouNg.join(', ')}</li>}
+                  {formData.keiyakuKaishiDate && <li>契約期間: {formData.keiyakuKaishiDate} 〜 {formData.keiyakuShuryoDate}</li>}
+                </Box>
+                <Box sx={{ mt: 1, fontSize: '0.8rem', color: 'text.secondary' }}>
+                  ※ 内容を確認・修正してから保存してください
+                </Box>
               </Typography>
             </Alert>
           </Collapse>
