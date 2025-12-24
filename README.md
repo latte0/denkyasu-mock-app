@@ -112,43 +112,35 @@ mock-app/
 
 モバイルファーストデザインを採用しており、スマートフォンからタブレット、デスクトップまで対応しています。
 
-## Docker + Basic認証
+## Basic認証（Vercel）
 
-本番環境ではDocker + nginxでBasic認証を設定できます。
+Next.js Middlewareを使用してBasic認証を実装しています。
 
-### ローカルでのテスト
+### Vercelへのデプロイ
+
+1. Vercelでプロジェクトをインポート
+2. 環境変数を設定:
+   - `BASIC_AUTH_USER`: 認証ユーザー名
+   - `BASIC_AUTH_PASSWORD`: 認証パスワード
+3. デプロイ
+
+### ローカルでの動作確認
+
+`.env.local` ファイルを作成:
 
 ```bash
-# Docker Composeでビルド＆起動
-docker-compose up --build
+BASIC_AUTH_USER=admin
+BASIC_AUTH_PASSWORD=password123
+```
 
-# ブラウザで http://localhost:8080 を開く
-# デフォルト認証情報: admin / password123
+```bash
+npm run dev
+# http://localhost:3000 にアクセス → Basic認証ダイアログが表示される
 ```
 
 ### 環境変数
 
-| 変数名 | 説明 | デフォルト値 |
-|--------|------|--------------|
-| `BASIC_AUTH_USER` | Basic認証のユーザー名 | admin |
-| `BASIC_AUTH_PASSWORD` | Basic認証のパスワード | admin |
-
-### Renderへのデプロイ
-
-1. `render.yaml` を使用してBlueprint経由でデプロイ
-2. Render Dashboardで環境変数を設定:
-   - `BASIC_AUTH_USER`: 任意のユーザー名
-   - `BASIC_AUTH_PASSWORD`: 強力なパスワード
-
-### Docker単体でのビルド
-
-```bash
-# ビルド
-docker build -t mock-app .
-
-# 起動（Basic認証付き）
-docker run -p 8080:80 \
-  -e BASIC_AUTH_USER=myuser \
-  -e BASIC_AUTH_PASSWORD=mypassword \
-  mock-app
-```
+| 変数名 | 説明 |
+|--------|------|
+| `BASIC_AUTH_USER` | Basic認証のユーザー名 |
+| `BASIC_AUTH_PASSWORD` | Basic認証のパスワード |
