@@ -1,0 +1,17 @@
+# Render Blueprint for mock-app with Basic Authentication
+# https://render.com/docs/blueprint-spec
+
+services:
+  # Frontend with Basic Auth (Docker + nginx)
+  - type: web
+    name: mock-app-frontend
+    runtime: docker
+    rootDir: mock-app
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: BASIC_AUTH_USER
+        sync: false  # Set manually in Render dashboard
+      - key: BASIC_AUTH_PASSWORD
+        sync: false  # Set manually in Render dashboard
+    healthCheckPath: /health
+

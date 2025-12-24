@@ -111,3 +111,44 @@ mock-app/
 ## モバイル対応
 
 モバイルファーストデザインを採用しており、スマートフォンからタブレット、デスクトップまで対応しています。
+
+## Docker + Basic認証
+
+本番環境ではDocker + nginxでBasic認証を設定できます。
+
+### ローカルでのテスト
+
+```bash
+# Docker Composeでビルド＆起動
+docker-compose up --build
+
+# ブラウザで http://localhost:8080 を開く
+# デフォルト認証情報: admin / password123
+```
+
+### 環境変数
+
+| 変数名 | 説明 | デフォルト値 |
+|--------|------|--------------|
+| `BASIC_AUTH_USER` | Basic認証のユーザー名 | admin |
+| `BASIC_AUTH_PASSWORD` | Basic認証のパスワード | admin |
+
+### Renderへのデプロイ
+
+1. `render.yaml` を使用してBlueprint経由でデプロイ
+2. Render Dashboardで環境変数を設定:
+   - `BASIC_AUTH_USER`: 任意のユーザー名
+   - `BASIC_AUTH_PASSWORD`: 強力なパスワード
+
+### Docker単体でのビルド
+
+```bash
+# ビルド
+docker build -t mock-app .
+
+# 起動（Basic認証付き）
+docker run -p 8080:80 \
+  -e BASIC_AUTH_USER=myuser \
+  -e BASIC_AUTH_PASSWORD=mypassword \
+  mock-app
+```
