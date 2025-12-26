@@ -1,5 +1,18 @@
 # dentsu Mock Application - 使用方法
 
+## 環境設定
+
+### OpenAI API キーの設定（音声認識機能に必要）
+
+1. [OpenAI Platform](https://platform.openai.com/api-keys) でAPIキーを取得
+2. `mock-app/.env.local` ファイルを作成し、以下を記載:
+
+```bash
+OPENAI_API_KEY=sk-your-api-key-here
+```
+
+---
+
 ## アプリケーションの起動
 
 ### 開発モードで起動
@@ -47,6 +60,13 @@ npm start
 - セル直接編集
 - 行の追加/削除
 - ページネーション
+
+### 6. 音声アップロード
+- 音声ファイル（mp3, wav, m4a）のアップロード
+- OpenAI Whisper APIによる自動文字起こし
+- GPT-4による営業情報の自動抽出
+- 文字起こし結果の編集
+- 営業タスクへの自動転記
 
 ## データについて
 

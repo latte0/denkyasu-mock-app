@@ -111,36 +111,3 @@ mock-app/
 ## モバイル対応
 
 モバイルファーストデザインを採用しており、スマートフォンからタブレット、デスクトップまで対応しています。
-
-## Basic認証（Vercel）
-
-Next.js Middlewareを使用してBasic認証を実装しています。
-
-### Vercelへのデプロイ
-
-1. Vercelでプロジェクトをインポート
-2. 環境変数を設定:
-   - `BASIC_AUTH_USER`: 認証ユーザー名
-   - `BASIC_AUTH_PASSWORD`: 認証パスワード
-3. デプロイ
-
-### ローカルでの動作確認
-
-`.env.local` ファイルを作成:
-
-```bash
-BASIC_AUTH_USER=admin
-BASIC_AUTH_PASSWORD=password123
-```
-
-```bash
-npm run dev
-# http://localhost:3000 にアクセス → Basic認証ダイアログが表示される
-```
-
-### 環境変数
-
-| 変数名 | 説明 |
-|--------|------|
-| `BASIC_AUTH_USER` | Basic認証のユーザー名 |
-| `BASIC_AUTH_PASSWORD` | Basic認証のパスワード |

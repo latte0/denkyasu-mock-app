@@ -16,6 +16,7 @@ import {
 } from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
 import AudioFileIcon from '@mui/icons-material/AudioFile';
+import SmartToyIcon from '@mui/icons-material/SmartToy';
 import Header from '@/components/Header';
 import { useData } from '@/context/DataContext';
 import { EigyoInfo } from '@/types';
@@ -26,11 +27,35 @@ import EigyoEigyoSection from '@/components/eigyo/EigyoEigyoSection';
 import EigyoJimushoSection from '@/components/eigyo/EigyoJimushoSection';
 import EigyoKanriSection from '@/components/eigyo/EigyoKanriSection';
 
+// Type for AI-extracted info from voice upload
+interface ExtractedInfo {
+  koukokushu?: string;
+  shohinService?: string;
+  talent?: string[];
+  keiyakuryoDentsuToDce?: number;
+  keiyakuKaishiDate?: string;
+  keiyakuShuryoDate?: string;
+  kyougouNg?: string[];
+  shokaiShutsuenbiDate?: string;
+  shutsuenryoTanka1Baitai?: string;
+  shutsuenryoTanka2Baitai?: string;
+  gyomuNaiyo?: string;
+  summary?: string;
+  confidence?: number;
+}
+
+// Voice data structure passed from voice-upload page
+interface VoiceData {
+  transcript: string;
+  extractedInfo: ExtractedInfo | null;
+}
+
 export default function EigyoNewForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { addEigyo, masters, eigyoList } = useData();
   const [transcriptText, setTranscriptText] = useState<string | null>(null);
+  const [aiExtracted, setAiExtracted] = useState<ExtractedInfo | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
   const [formData, setFormData] = useState<EigyoInfo>({
     id: `E${String(eigyoList.length + 1).padStart(3, '0')}`,
@@ -129,46 +154,37 @@ export default function EigyoNewForm() {
     shutsuenryoTanka5DceToJimusho: 0,
   });
 
-  // 文字起こしテキストから情報を抽出（モック）
+  // Legacy: 文字起こしテキストから情報を抽出（モック - 旧パラメータ用）
   const extractInfoFromTranscript = (text: string): Partial<EigyoInfo> => {
-    // モック: 実際にはAIで解析するが、ここでは音声内容に基づいて固定値を設定
     const extracted: Partial<EigyoInfo> = {};
     
-    // 広告主の抽出（モックでは固定値 + テキスト内容から推測）
     if (text.includes('株式会社') || text.includes('お世話になっております')) {
       extracted.koukokushu = '株式会社サンプル化粧品';
     }
     
-    // 商品・サービスの抽出
     if (text.includes('化粧品') || text.includes('新ブランド')) {
       extracted.shohinService = '化粧品（新ブランド）20代〜30代女性向け';
     } else if (text.includes('新商品')) {
       extracted.shohinService = '新商品CM';
     }
     
-    // 金額の抽出（〇〇万円、〇〇億円など）
     const amountMatch = text.match(/(\d+)(万円|億円)/);
     if (amountMatch) {
       const amount = parseInt(amountMatch[1]);
       const unit = amountMatch[2];
-      // 万円単位に変換して円に
       const amountInMan = unit === '億円' ? amount * 10000 : amount;
-      extracted.keiyakuryoDentsuToDce = amountInMan * 10000; // 円に変換
+      extracted.keiyakuryoDentsuToDce = amountInMan * 10000;
     }
     
-    // タレント名の抽出（モックでは固定値）
     if (text.includes('タレント') || text.includes('候補')) {
       extracted.talent = ['山田太郎'];
     }
     
-    // 競合NGの抽出
     if (text.includes('化粧品メーカー') || text.includes('同業他社')) {
       extracted.kyougouNg = ['化粧品メーカー全般'];
     }
     
-    // 使用期間の抽出
     if (text.includes('1年間') || text.includes('年間')) {
-      // 契約開始日を今日から、終了日を1年後に設定
       const today = new Date();
       const nextYear = new Date(today);
       nextYear.setFullYear(nextYear.getFullYear() + 1);
@@ -176,13 +192,11 @@ export default function EigyoNewForm() {
       extracted.keiyakuShuryoDate = nextYear.toISOString().split('T')[0];
     }
     
-    // 撮影予定日の抽出
     if (text.includes('来年1月') || text.includes('1月')) {
       const nextYear = new Date().getFullYear() + 1;
       extracted.shokaiShutsuenbiDate = `${nextYear}-01-15`;
     }
     
-    // 媒体の抽出
     if (text.includes('テレビCM') || text.includes('テレビ')) {
       extracted.shutsuenryoTanka1Baitai = 'テレビCM';
     }
@@ -193,24 +207,76 @@ export default function EigyoNewForm() {
     return extracted;
   };
 
-  // URLパラメータから文字起こしテキストを取得
+  // Convert AI extracted info to EigyoInfo partial
+  const convertExtractedInfoToFormData = (info: ExtractedInfo): Partial<EigyoInfo> => {
+    const converted: Partial<EigyoInfo> = {};
+    
+    if (info.koukokushu) converted.koukokushu = info.koukokushu;
+    if (info.shohinService) converted.shohinService = info.shohinService;
+    if (info.talent && info.talent.length > 0) converted.talent = info.talent;
+    if (info.keiyakuryoDentsuToDce) converted.keiyakuryoDentsuToDce = info.keiyakuryoDentsuToDce;
+    if (info.keiyakuKaishiDate) converted.keiyakuKaishiDate = info.keiyakuKaishiDate;
+    if (info.keiyakuShuryoDate) converted.keiyakuShuryoDate = info.keiyakuShuryoDate;
+    if (info.kyougouNg && info.kyougouNg.length > 0) converted.kyougouNg = info.kyougouNg;
+    if (info.shokaiShutsuenbiDate) converted.shokaiShutsuenbiDate = info.shokaiShutsuenbiDate;
+    if (info.shutsuenryoTanka1Baitai) converted.shutsuenryoTanka1Baitai = info.shutsuenryoTanka1Baitai;
+    if (info.shutsuenryoTanka2Baitai) converted.shutsuenryoTanka2Baitai = info.shutsuenryoTanka2Baitai;
+    if (info.gyomuNaiyo) converted.gyomuNaiyo = info.gyomuNaiyo;
+    
+    return converted;
+  };
+
+  // URLパラメータから音声データまたは文字起こしテキストを取得
   useEffect(() => {
-    // 既に初期化済みの場合はスキップ
     if (isInitialized) return;
     
+    // New format: voiceData (contains both transcript and AI-extracted info)
+    const voiceDataParam = searchParams.get('voiceData');
+    if (voiceDataParam) {
+      try {
+        const decoded = decodeURIComponent(escape(atob(decodeURIComponent(voiceDataParam))));
+        const voiceData: VoiceData = JSON.parse(decoded);
+        
+        setTranscriptText(voiceData.transcript);
+        
+        if (voiceData.extractedInfo) {
+          setAiExtracted(voiceData.extractedInfo);
+          const formUpdates = convertExtractedInfoToFormData(voiceData.extractedInfo);
+          
+          setFormData(prev => ({
+            ...prev,
+            ...formUpdates,
+            gyomuNaiyo: voiceData.transcript, // Save original transcript
+          }));
+        } else {
+          // No AI extraction, use legacy method
+          const extractedInfo = extractInfoFromTranscript(voiceData.transcript);
+          setFormData(prev => ({
+            ...prev,
+            ...extractedInfo,
+            gyomuNaiyo: voiceData.transcript,
+          }));
+        }
+        setIsInitialized(true);
+        return;
+      } catch (e) {
+        console.error('Failed to decode voiceData:', e);
+      }
+    }
+    
+    // Legacy format: transcript (plain text only)
     const transcript = searchParams.get('transcript');
     if (transcript) {
       try {
         const decoded = decodeURIComponent(escape(atob(decodeURIComponent(transcript))));
         setTranscriptText(decoded);
         
-        // 文字起こしテキストから情報を抽出して自動入力
         const extractedInfo = extractInfoFromTranscript(decoded);
         
         setFormData(prev => ({
           ...prev,
           ...extractedInfo,
-          gyomuNaiyo: decoded, // 元のテキストも業務内容に保存
+          gyomuNaiyo: decoded,
         }));
         setIsInitialized(true);
       } catch (e) {
@@ -218,7 +284,6 @@ export default function EigyoNewForm() {
         setIsInitialized(true);
       }
     } else {
-      // transcriptパラメータがない場合も初期化完了とする
       setIsInitialized(true);
     }
   }, [searchParams, isInitialized]);
@@ -237,9 +302,9 @@ export default function EigyoNewForm() {
     setFormData({ ...formData, ...updates });
   };
 
-  // transcriptパラメータがある場合は初期化完了まで待つ
-  const hasTranscriptParam = searchParams.get('transcript');
-  if (hasTranscriptParam && !isInitialized) {
+  // Wait for initialization if voice data param exists
+  const hasVoiceParam = searchParams.get('voiceData') || searchParams.get('transcript');
+  if (hasVoiceParam && !isInitialized) {
     return (
       <Box sx={{ minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
         <Header title="営業情報新規作成" showBack={true} />
@@ -257,8 +322,49 @@ export default function EigyoNewForm() {
       
       <Container maxWidth="md" sx={{ py: 3 }}>
         <Stack spacing={3}>
-          {/* 音声文字起こしからの作成アラート */}
-          <Collapse in={!!transcriptText}>
+          {/* AI抽出結果アラート（新形式） */}
+          <Collapse in={!!aiExtracted}>
+            <Alert 
+              severity="info" 
+              icon={<SmartToyIcon />}
+              sx={{ mb: 2, backgroundColor: '#e3f2fd' }}
+            >
+              <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1 }}>
+                🤖 AIが音声から情報を自動抽出しました
+                {aiExtracted?.confidence && (
+                  <Box component="span" sx={{ ml: 1, color: aiExtracted.confidence > 0.7 ? 'success.main' : 'warning.main' }}>
+                    (信頼度: {Math.round(aiExtracted.confidence * 100)}%)
+                  </Box>
+                )}
+              </Typography>
+              <Typography variant="body2" component="div">
+                以下のフィールドに自動入力されました：
+                <Box component="ul" sx={{ m: 0, pl: 2, mt: 0.5 }}>
+                  {formData.koukokushu && <li><strong>広告主:</strong> {formData.koukokushu}</li>}
+                  {formData.shohinService && <li><strong>商品・サービス:</strong> {formData.shohinService}</li>}
+                  {formData.talent && formData.talent.length > 0 && <li><strong>タレント:</strong> {formData.talent.join(', ')}</li>}
+                  {formData.keiyakuryoDentsuToDce > 0 && <li><strong>契約料:</strong> {formData.keiyakuryoDentsuToDce.toLocaleString()}円</li>}
+                  {formData.kyougouNg && formData.kyougouNg.length > 0 && <li><strong>競合NG:</strong> {formData.kyougouNg.join(', ')}</li>}
+                  {formData.keiyakuKaishiDate && <li><strong>契約期間:</strong> {formData.keiyakuKaishiDate} 〜 {formData.keiyakuShuryoDate}</li>}
+                  {formData.shokaiShutsuenbiDate && <li><strong>撮影予定:</strong> {formData.shokaiShutsuenbiDate}</li>}
+                  {(formData.shutsuenryoTanka1Baitai || formData.shutsuenryoTanka2Baitai) && (
+                    <li><strong>媒体:</strong> {[formData.shutsuenryoTanka1Baitai, formData.shutsuenryoTanka2Baitai].filter(Boolean).join(', ')}</li>
+                  )}
+                </Box>
+                {aiExtracted?.summary && (
+                  <Box sx={{ mt: 1, fontStyle: 'italic', color: 'text.secondary' }}>
+                    💡 {aiExtracted.summary}
+                  </Box>
+                )}
+                <Box sx={{ mt: 1, fontSize: '0.8rem', color: 'text.secondary' }}>
+                  ※ 内容を確認・修正してから保存してください
+                </Box>
+              </Typography>
+            </Alert>
+          </Collapse>
+
+          {/* 旧形式：音声文字起こしからの作成アラート */}
+          <Collapse in={!!transcriptText && !aiExtracted}>
             <Alert 
               severity="success" 
               icon={<AudioFileIcon />}
@@ -370,4 +476,3 @@ export default function EigyoNewForm() {
     </Box>
   );
 }
-

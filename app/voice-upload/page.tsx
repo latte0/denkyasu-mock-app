@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Container,
@@ -15,42 +15,71 @@ import {
   Chip,
   LinearProgress,
   Fade,
+  Alert,
+  CircularProgress,
 } from '@mui/material';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import AudioFileIcon from '@mui/icons-material/AudioFile';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import PauseIcon from '@mui/icons-material/Pause';
 import BusinessIcon from '@mui/icons-material/Business';
+import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 import Header from '@/components/Header';
 
-// モック文字起こしデータ（営業シーンを想定）
-const mockTranscript = [
-  { time: '00:00', text: 'お世話になっております。〇〇株式会社の山田です。' },
-  { time: '00:05', text: '本日はタレント起用の件でご連絡いたしました。' },
-  { time: '00:12', text: 'はい、お電話ありがとうございます。担当の佐藤です。' },
-  { time: '00:18', text: '新商品のCMに関して、タレントさんの起用を検討しておりまして。' },
-  { time: '00:28', text: 'なるほど、どのような商品でしょうか？' },
-  { time: '00:33', text: '化粧品の新ブランドになります。ターゲットは20代〜30代の女性です。' },
-  { time: '00:42', text: '承知しました。ご予算感はいかがでしょうか？' },
-  { time: '00:48', text: '契約料として5000万円程度を想定しています。' },
-  { time: '00:55', text: '使用期間は1年間、媒体はテレビCMとWEB広告を予定しています。' },
-  { time: '01:05', text: 'わかりました。競合NGの範囲はどのようにお考えですか？' },
-  { time: '01:12', text: '同業他社、つまり化粧品メーカー全般でお願いしたいです。' },
-  { time: '01:20', text: '承知しました。候補のタレントさんはお決まりですか？' },
-  { time: '01:28', text: 'はい、第一候補として〇〇さんを考えています。' },
-  { time: '01:35', text: '〇〇さんですね。現在のスケジュールを確認いたします。' },
-  { time: '01:42', text: '撮影は来年1月頃を予定しています。' },
-  { time: '01:48', text: 'かしこまりました。確認して折り返しご連絡いたします。' },
-  { time: '01:55', text: 'よろしくお願いいたします。' },
-  { time: '02:00', text: 'それでは失礼いたします。' },
-];
+// Types for API responses
+interface TranscriptSegment {
+  start: number;
+  end: number;
+  text: string;
+}
+
+interface TranscribeResponse {
+  text: string;
+  segments: TranscriptSegment[];
+  duration: number;
+}
+
+interface ExtractedInfo {
+  koukokushu?: string;
+  shohinService?: string;
+  talent?: string[];
+  keiyakuryoDentsuToDce?: number;
+  keiyakuKaishiDate?: string;
+  keiyakuShuryoDate?: string;
+  kyougouNg?: string[];
+  shokaiShutsuenbiDate?: string;
+  shutsuenryoTanka1Baitai?: string;
+  shutsuenryoTanka2Baitai?: string;
+  gyomuNaiyo?: string;
+  summary?: string;
+  confidence?: number;
+}
+
+// Format seconds to MM:SS
+const formatTime = (seconds: number): string => {
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+};
 
 export default function VoiceUploadPage() {
   const router = useRouter();
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  
   const [isDragging, setIsDragging] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [processingStatus, setProcessingStatus] = useState('');
   const [showTranscript, setShowTranscript] = useState(false);
   const [editableText, setEditableText] = useState('');
+  const [segments, setSegments] = useState<TranscriptSegment[]>([]);
+  const [duration, setDuration] = useState<number>(0);
+  const [error, setError] = useState<string | null>(null);
+  
+  const [isExtracting, setIsExtracting] = useState(false);
+  const [extractedInfo, setExtractedInfo] = useState<ExtractedInfo | null>(null);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -70,6 +99,7 @@ export default function VoiceUploadPage() {
     if (files.length > 0) {
       processFile(files[0]);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -79,31 +109,125 @@ export default function VoiceUploadPage() {
     }
   };
 
-  const processFile = (file: File) => {
-    // 音声ファイルかチェック
-    const validTypes = ['audio/mpeg', 'audio/wav', 'audio/mp4', 'audio/m4a', 'audio/x-m4a'];
-    if (!validTypes.includes(file.type) && !file.name.match(/\.(mp3|wav|m4a)$/i)) {
-      alert('対応している音声ファイル形式: mp3, wav, m4a');
+  const processFile = async (file: File) => {
+    // Reset state
+    setError(null);
+    setShowTranscript(false);
+    setExtractedInfo(null);
+    setSegments([]);
+    
+    // Validate file type
+    const validTypes = ['audio/mpeg', 'audio/wav', 'audio/mp4', 'audio/m4a', 'audio/x-m4a', 'audio/webm'];
+    if (!validTypes.includes(file.type) && !file.name.match(/\.(mp3|wav|m4a|webm)$/i)) {
+      setError('対応している音声ファイル形式: mp3, wav, m4a, webm');
+      return;
+    }
+
+    // Validate file size (25MB max for OpenAI)
+    const maxSize = 25 * 1024 * 1024;
+    if (file.size > maxSize) {
+      setError('ファイルサイズが大きすぎます。25MB以下のファイルをアップロードしてください。');
       return;
     }
 
     setUploadedFile(file);
     setIsProcessing(true);
-    
-    // モック処理（2秒後に文字起こし表示）
-    setTimeout(() => {
-      setIsProcessing(false);
+    setProcessingStatus('音声ファイルをアップロード中...');
+
+    // Create audio URL for playback
+    const url = URL.createObjectURL(file);
+    setAudioUrl(url);
+
+    try {
+      // Call transcribe API
+      setProcessingStatus('Whisper APIで文字起こし中...');
+      
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/transcribe', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || '文字起こしに失敗しました');
+      }
+
+      const data: TranscribeResponse = await response.json();
+      
+      setSegments(data.segments);
+      setDuration(data.duration);
+      
+      // Format text with timestamps for editing
+      const formattedText = data.segments.length > 0
+        ? data.segments.map(seg => `[${formatTime(seg.start)}] ${seg.text}`).join('\n')
+        : data.text;
+      
+      setEditableText(formattedText);
       setShowTranscript(true);
-      // 編集用テキストを生成
-      const fullText = mockTranscript.map(t => `[${t.time}] ${t.text}`).join('\n');
-      setEditableText(fullText);
-    }, 2000);
+      setProcessingStatus('');
+    } catch (err) {
+      console.error('Transcription error:', err);
+      setError(err instanceof Error ? err.message : '文字起こしに失敗しました');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleExtractInfo = async () => {
+    if (!editableText.trim()) {
+      setError('文字起こしテキストがありません');
+      return;
+    }
+
+    setIsExtracting(true);
+    setError(null);
+
+    try {
+      const response = await fetch('/api/extract-info', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ transcript: editableText }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || '情報抽出に失敗しました');
+      }
+
+      const data: ExtractedInfo = await response.json();
+      setExtractedInfo(data);
+    } catch (err) {
+      console.error('Extraction error:', err);
+      setError(err instanceof Error ? err.message : '情報抽出に失敗しました');
+    } finally {
+      setIsExtracting(false);
+    }
   };
 
   const handleCreateTask = () => {
-    // テキストをBase64エンコードしてURLパラメータに渡す
-    const encodedText = encodeURIComponent(btoa(unescape(encodeURIComponent(editableText))));
-    router.push(`/eigyo/new?transcript=${encodedText}`);
+    // Encode both transcript and extracted info
+    const dataToPass = {
+      transcript: editableText,
+      extractedInfo: extractedInfo,
+    };
+    const encodedData = encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify(dataToPass)))));
+    router.push(`/eigyo/new?voiceData=${encodedData}`);
+  };
+
+  const handlePlayPause = () => {
+    if (!audioRef.current) return;
+    
+    if (isPlaying) {
+      audioRef.current.pause();
+    } else {
+      audioRef.current.play();
+    }
+    setIsPlaying(!isPlaying);
   };
 
   const formatFileSize = (bytes: number) => {
@@ -116,8 +240,24 @@ export default function VoiceUploadPage() {
     <Box sx={{ minHeight: '100vh', backgroundColor: '#f5f5f5', pb: 4 }}>
       <Header title="音声アップロード" showBack={true} />
       
+      {/* Hidden audio element for playback */}
+      {audioUrl && (
+        <audio 
+          ref={audioRef} 
+          src={audioUrl} 
+          onEnded={() => setIsPlaying(false)}
+        />
+      )}
+      
       <Container maxWidth="md" sx={{ py: 3 }}>
         <Stack spacing={3}>
+          {/* Error Alert */}
+          {error && (
+            <Alert severity="error" onClose={() => setError(null)}>
+              {error}
+            </Alert>
+          )}
+
           {/* アップロードエリア */}
           <Card>
             <CardContent>
@@ -152,7 +292,7 @@ export default function VoiceUploadPage() {
               >
                 <input
                   type="file"
-                  accept=".mp3,.wav,.m4a,audio/*"
+                  accept=".mp3,.wav,.m4a,.webm,audio/*"
                   hidden
                   onChange={handleFileSelect}
                 />
@@ -161,7 +301,7 @@ export default function VoiceUploadPage() {
                   ドラッグ＆ドロップ または クリックして選択
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  対応形式: MP3, WAV, M4A
+                  対応形式: MP3, WAV, M4A, WebM（最大25MB）
                 </Typography>
               </Paper>
             </CardContent>
@@ -179,22 +319,25 @@ export default function VoiceUploadPage() {
                         {uploadedFile.name}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
-                        {formatFileSize(uploadedFile.size)} • 約2分00秒（モック）
+                        {formatFileSize(uploadedFile.size)}
+                        {duration > 0 && ` • ${formatTime(duration)}`}
                       </Typography>
                     </Box>
-                    <Chip
-                      icon={<PlayArrowIcon />}
-                      label="再生"
-                      variant="outlined"
-                      onClick={() => {}}
-                      sx={{ cursor: 'pointer' }}
-                    />
+                    {audioUrl && (
+                      <Chip
+                        icon={isPlaying ? <PauseIcon /> : <PlayArrowIcon />}
+                        label={isPlaying ? '一時停止' : '再生'}
+                        variant="outlined"
+                        onClick={handlePlayPause}
+                        sx={{ cursor: 'pointer' }}
+                      />
+                    )}
                   </Box>
                   
                   {isProcessing && (
                     <Box sx={{ mt: 3 }}>
                       <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                        文字起こし処理中...
+                        {processingStatus}
                       </Typography>
                       <LinearProgress />
                     </Box>
@@ -214,48 +357,50 @@ export default function VoiceUploadPage() {
                   </Typography>
                   
                   {/* タイムスタンプ付き表示 */}
-                  <Paper 
-                    variant="outlined" 
-                    sx={{ 
-                      p: 2, 
-                      maxHeight: 400, 
-                      overflow: 'auto',
-                      backgroundColor: '#fafafa',
-                      mb: 3,
-                    }}
-                  >
-                    <Stack spacing={1.5}>
-                      {mockTranscript.map((item, index) => (
-                        <Box 
-                          key={index} 
-                          sx={{ 
-                            display: 'flex', 
-                            gap: 2,
-                            '&:hover': {
-                              backgroundColor: 'rgba(25, 118, 210, 0.08)',
-                              borderRadius: 1,
-                            },
-                            p: 0.5,
-                            transition: 'background-color 0.2s',
-                          }}
-                        >
-                          <Chip
-                            label={item.time}
-                            size="small"
-                            variant="outlined"
+                  {segments.length > 0 && (
+                    <Paper 
+                      variant="outlined" 
+                      sx={{ 
+                        p: 2, 
+                        maxHeight: 300, 
+                        overflow: 'auto',
+                        backgroundColor: '#fafafa',
+                        mb: 3,
+                      }}
+                    >
+                      <Stack spacing={1.5}>
+                        {segments.map((item, index) => (
+                          <Box 
+                            key={index} 
                             sx={{ 
-                              minWidth: 60,
-                              fontFamily: 'monospace',
-                              fontSize: '0.75rem',
+                              display: 'flex', 
+                              gap: 2,
+                              '&:hover': {
+                                backgroundColor: 'rgba(25, 118, 210, 0.08)',
+                                borderRadius: 1,
+                              },
+                              p: 0.5,
+                              transition: 'background-color 0.2s',
                             }}
-                          />
-                          <Typography variant="body2" sx={{ flex: 1, lineHeight: 1.8 }}>
-                            {item.text}
-                          </Typography>
-                        </Box>
-                      ))}
-                    </Stack>
-                  </Paper>
+                          >
+                            <Chip
+                              label={formatTime(item.start)}
+                              size="small"
+                              variant="outlined"
+                              sx={{ 
+                                minWidth: 60,
+                                fontFamily: 'monospace',
+                                fontSize: '0.75rem',
+                              }}
+                            />
+                            <Typography variant="body2" sx={{ flex: 1, lineHeight: 1.8 }}>
+                              {item.text}
+                            </Typography>
+                          </Box>
+                        ))}
+                      </Stack>
+                    </Paper>
+                  )}
 
                   {/* 編集可能テキストエリア */}
                   <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 'bold' }}>
@@ -276,6 +421,84 @@ export default function VoiceUploadPage() {
                       },
                     }}
                   />
+
+                  {/* AI情報抽出ボタン */}
+                  <Box sx={{ mt: 2 }}>
+                    <Button
+                      variant="outlined"
+                      color="secondary"
+                      startIcon={isExtracting ? <CircularProgress size={20} /> : <AutoFixHighIcon />}
+                      onClick={handleExtractInfo}
+                      disabled={isExtracting}
+                      fullWidth
+                    >
+                      {isExtracting ? 'AIが情報を抽出中...' : 'AIで営業情報を自動抽出'}
+                    </Button>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Fade>
+          )}
+
+          {/* 抽出結果表示 */}
+          {extractedInfo && (
+            <Fade in={true}>
+              <Card sx={{ backgroundColor: '#e3f2fd' }}>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold', mb: 2 }}>
+                    🤖 AI抽出結果
+                    {extractedInfo.confidence && (
+                      <Chip 
+                        label={`信頼度: ${Math.round(extractedInfo.confidence * 100)}%`}
+                        size="small"
+                        color={extractedInfo.confidence > 0.7 ? 'success' : 'warning'}
+                        sx={{ ml: 2 }}
+                      />
+                    )}
+                  </Typography>
+                  
+                  <Stack spacing={1}>
+                    {extractedInfo.koukokushu && (
+                      <Typography variant="body2">
+                        <strong>広告主:</strong> {extractedInfo.koukokushu}
+                      </Typography>
+                    )}
+                    {extractedInfo.shohinService && (
+                      <Typography variant="body2">
+                        <strong>商品・サービス:</strong> {extractedInfo.shohinService}
+                      </Typography>
+                    )}
+                    {extractedInfo.talent && extractedInfo.talent.length > 0 && (
+                      <Typography variant="body2">
+                        <strong>タレント:</strong> {extractedInfo.talent.join(', ')}
+                      </Typography>
+                    )}
+                    {extractedInfo.keiyakuryoDentsuToDce && (
+                      <Typography variant="body2">
+                        <strong>予算:</strong> {extractedInfo.keiyakuryoDentsuToDce.toLocaleString()}円
+                      </Typography>
+                    )}
+                    {extractedInfo.shutsuenryoTanka1Baitai && (
+                      <Typography variant="body2">
+                        <strong>媒体:</strong> {[extractedInfo.shutsuenryoTanka1Baitai, extractedInfo.shutsuenryoTanka2Baitai].filter(Boolean).join(', ')}
+                      </Typography>
+                    )}
+                    {extractedInfo.kyougouNg && extractedInfo.kyougouNg.length > 0 && (
+                      <Typography variant="body2">
+                        <strong>競合NG:</strong> {extractedInfo.kyougouNg.join(', ')}
+                      </Typography>
+                    )}
+                    {extractedInfo.shokaiShutsuenbiDate && (
+                      <Typography variant="body2">
+                        <strong>撮影予定:</strong> {extractedInfo.shokaiShutsuenbiDate}
+                      </Typography>
+                    )}
+                    {extractedInfo.summary && (
+                      <Typography variant="body2" sx={{ mt: 1, fontStyle: 'italic', color: 'text.secondary' }}>
+                        {extractedInfo.summary}
+                      </Typography>
+                    )}
+                  </Stack>
                 </CardContent>
               </Card>
             </Fade>
@@ -310,4 +533,3 @@ export default function VoiceUploadPage() {
     </Box>
   );
 }
-
